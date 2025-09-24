@@ -295,6 +295,7 @@ __global__ void bilagrid_uniform_sample_backward_v1_kernel_rgb(
     v_rgb[g_off + 2] = isfinite(vb) ? vb : 0.0f;
 }
 
+// 修改的关键部分：将最后两个参数改为 unsigned 类型以匹配头文件声明
 void bilagrid_uniform_sample_backward_v1(
     const float *bilagrid,
     const float *rgb,
@@ -308,16 +309,20 @@ void bilagrid_uniform_sample_backward_v1(
     int m,
     int h,
     int w,
-    const int block_x,
-    const int block_y,
+    const unsigned block_x,  // 改为 unsigned
+    const unsigned block_y,  // 改为 unsigned  
     const int target_tile_size
 ) {
+    // 在函数内部将 unsigned 转换为 int 使用
+    int block_x_int = static_cast<int>(block_x);
+    int block_y_int = static_cast<int>(block_y);
+    
     // v_bilagrid
     {
-        dim3 block = {(unsigned int)block_x, (unsigned int)block_y, 1u};
+        dim3 block = {(unsigned int)block_x_int, (unsigned int)block_y_int, 1u};
 
-        int mult_x = (2 * w + W) / (block.x * W * target_tile_size);
-        int mult_y = (2 * h + H) / (block.y * H * target_tile_size);
+        int mult_x = (2 * w + W) / (block_x_int * W * target_tile_size);  // 使用转换后的变量
+        int mult_y = (2 * h + H) / (block_y_int * H * target_tile_size);
         if (mult_x * mult_y < 4)
             mult_x = mult_y = 1;
         else {
